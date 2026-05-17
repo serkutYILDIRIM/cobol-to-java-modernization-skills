@@ -4,10 +4,6 @@ A curated set of **Agent Skills** for modernizing IBM Enterprise COBOL / CICS / 
 DB2 / VSAM mainframe workloads into idiomatic **Java 21 + Spring Boot 3.x**
 microservices.
 
-This repository follows the open [agentskills.io](https://agentskills.io)
-SKILL.md standard and mirrors the structural conventions of the reference
-repository [`dotnet/skills`](https://github.com/dotnet/skills).
-
 > **Status:** scaffolding (Phase 2). SKILL.md bodies and `eval.yaml` tests
 > are produced in Phases 3–4.
 

@@ -1,0 +1,104 @@
+# Eval suite for skill: analyze-cobol-program
+# Format: dotnet/skills-style scenarios with assertions + rubric.
+skill: analyze-cobol-program
+plugin: cobol-modernization
+
+scenarios:
+  - name: "billing-program-vsam-db2"
+    fixtures:
+      - fixtures/BILL010.cob
+    prompt: |
+      Analyze the COBOL program at fixtures/BILL010.cob using the
+      analyze-cobol-program skill. Use the default dialect
+      (ibm-enterprise-cobol). No copybook_dirs are provided.
+      Write program-profile.json and program-brief.md to the
+      current working directory.
+    assertions:
+      - type: file_exists
+        value: "program-profile.json"
+      - type: file_exists
+        value: "program-brief.md"
+      - type: output_contains
+        value: "BILL010"
+      - type: output_contains
+        value: "CUST-MASTER"
+      - type: output_contains
+        value: "TAX_CONFIG"
+      - type: output_contains
+        value: "W-COPY-UNRESOLVED"
+      - type: json_path
+        file: "program-profile.json"
+        path: "$.identification.programId"
+        equals: "BILL010"
+      - type: json_path
+        file: "program-profile.json"
+        path: "$.environment.files[?(@.logicalName=='CUST-MASTER')].organization"
+        equals: "INDEXED"
+      - type: json_path
+        file: "program-profile.json"
+        path: "$.procedure.callEdges[0].target"
+        equals: "BILLFMT"
+      - type: json_path
+        file: "program-profile.json"
+        path: "$.metrics.cyclomatic"
+        gte: 5
+    rubric:
+      - "All 6 paragraphs (0000-MAIN, 1000-INIT, 2000-PROCESS, 2100-COMPUTE-BILL, 2200-WRITE-BILL, 9000-TERM) appear in procedure.paragraphs[]."
+      - "performEdges[] reproduces the call graph: MAIN→INIT, MAIN→PROCESS(UNTIL), MAIN→TERM, PROCESS→COMPUTE, PROCESS→WRITE."
+      - "execSqlBlocks[] contains exactly one SELECT against TAX_CONFIG with host vars :WS-TAX-PCT and :LK-RUN-DATE."
+      - "data.copybooks[] contains CUSTREC with REPLACING pair ==:PFX:== / ==CM== and resolvedPath null."
+      - "metrics.deadParagraphs is empty."
+      - "program-brief.md is <= 60 lines and references program-profile.json on line 1."
+    timeout: 180
+
+  - name: "tiny-program-no-files-no-sql"
+    fixtures:
+      - fixtures/HELLO01.cob
+    prompt: |
+      Analyze fixtures/HELLO01.cob with the analyze-cobol-program
+      skill. Emit program-profile.json and program-brief.md.
+    assertions:
+      - type: file_exists
+        value: "program-profile.json"
+      - type: output_contains
+        value: "HELLO01"
+      - type: json_path
+        file: "program-profile.json"
+        path: "$.environment.files"
+        equals: []
+      - type: json_path
+        file: "program-profile.json"
+        path: "$.procedure.execSqlBlocks"
+        equals: []
+      - type: json_path
+        file: "program-profile.json"
+        path: "$.procedure.execCicsBlocks"
+        equals: []
+      - type: json_path
+        file: "program-profile.json"
+        path: "$.metrics.cyclomatic"
+        equals: 1
+      - type: output_not_contains
+        value: "W-HIGH-COMPLEXITY"
+    rubric:
+      - "Paragraph 0000-MAIN is detected with fanIn=0 and is NOT listed as dead (it is the entry paragraph)."
+      - "No false-positive copybooks, files, or SQL blocks are emitted."
+    timeout: 120
+
+  - name: "determinism-rerun"
+    fixtures:
+      - fixtures/BILL010.cob
+    prompt: |
+      Run analyze-cobol-program twice in a row against
+      fixtures/BILL010.cob in the same working directory. The
+      second run must produce byte-identical program-profile.json
+      and program-brief.md.
+    assertions:
+      - type: files_byte_identical_across_runs
+        value:
+          - "program-profile.json"
+          - "program-brief.md"
+    rubric:
+      - "Arrays are sorted by startLine then name; no timestamps or absolute non-input paths leak into output (source.path may be relative)."
+    timeout: 180
+

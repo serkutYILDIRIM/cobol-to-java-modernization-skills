@@ -1,0 +1,14 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. HELLO01.
+       AUTHOR. MODERNIZATION-TEAM.
+      *> Minimal program: no files, no SQL, no CICS, no copybooks.
+       ENVIRONMENT DIVISION.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01  WS-GREETING                PIC X(20) VALUE 'HELLO, MAINFRAME'.
+
+       PROCEDURE DIVISION.
+       0000-MAIN SECTION.
+           DISPLAY WS-GREETING
+           GOBACK.
+
