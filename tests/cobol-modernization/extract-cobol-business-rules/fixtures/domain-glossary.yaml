@@ -1,0 +1,54 @@
+# Domain glossary fixture for BILL010 — used by extract-cobol-business-rules.
+# Keys are COBOL data-item names (case-insensitive match, canonical case
+# preserved on output). Each entry provides a Java identifier, a human
+# display name, and (optionally) a one-line description.
+terms:
+  CM-CUST-ID:
+    javaName: customerId
+    displayName: "Customer Id"
+    description: "Unique customer identifier (VSAM KSDS key)."
+  CM-PLAN-CODE:
+    javaName: customerPlanCode
+    displayName: "Customer Plan Code"
+    description: "Tariff plan: PRE | STD | PRO."
+  CM-USAGE:
+    javaName: usageUnits
+    displayName: "Usage Units"
+    description: "Monthly metered usage units."
+  WS-BASE-AMT:
+    javaName: baseAmount
+    displayName: "Base Amount"
+    description: "Pre-tax billable amount for the customer-month."
+  WS-TAX-PCT:
+    javaName: taxPercent
+    displayName: "Tax Percent"
+    description: "Country tax rate effective on the run date."
+  WS-TOTAL-AMT:
+    javaName: totalAmount
+    displayName: "Total Amount"
+    description: "Final billed amount including tax."
+  WS-EOF-FLAG:
+    javaName: endOfFileReached
+    displayName: "End Of File"
+    description: "True when CUST-MASTER has been fully read."
+  WS-EOF:
+    javaName: endOfFileReached
+    displayName: "End Of File"
+    description: "88-level alias for WS-EOF-FLAG = 'Y'."
+  WS-READ-CT:
+    javaName: readCount
+    displayName: "Read Count"
+  WS-BILLED-CT:
+    javaName: billedCount
+    displayName: "Billed Count"
+  WS-ERROR-CT:
+    javaName: errorCount
+    displayName: "Error Count"
+  LK-RUN-DATE:
+    javaName: runDate
+    displayName: "Run Date"
+    description: "Effective date for tax lookup (YYYYMMDD)."
+  LK-RETURN-CODE:
+    javaName: returnCode
+    displayName: "Return Code"
+

@@ -1,0 +1,108 @@
+# Eval suite for skill: extract-cobol-business-rules
+# Format: dotnet/skills-style scenarios with assertions + rubric.
+skill: extract-cobol-business-rules
+plugin: cobol-modernization
+
+scenarios:
+  - name: "billing-rules-with-glossary"
+    fixtures:
+      - fixtures/BILL010.cob
+      - fixtures/BILL010.program-profile.json
+      - fixtures/domain-glossary.yaml
+    prompt: |
+      Extract business rules for fixtures/BILL010.cob using the
+      extract-cobol-business-rules skill. Pass
+      program_profile_path=fixtures/BILL010.program-profile.json,
+      program_source_path=fixtures/BILL010.cob, and
+      domain_glossary_path=fixtures/domain-glossary.yaml. No
+      copybook_dirs. Write business-rules.json and business-rules.md
+      to the current working directory.
+    assertions:
+      - type: file_exists
+        value: "business-rules.json"
+      - type: file_exists
+        value: "business-rules.md"
+      - type: output_contains
+        value: "BR-2100-COMPUTE-BILL-003"
+      - type: output_contains
+        value: "Customer Plan Code"
+      - type: output_contains
+        value: "TAX_CONFIG"
+      - type: output_not_contains
+        value: "W-NO-GLOSSARY"
+      - type: json_path
+        file: "business-rules.json"
+        path: "$.source.programId"
+        equals: "BILL010"
+      - type: json_path
+        file: "business-rules.json"
+        path: "$.summary.byType.CALCULATION"
+        equals: 5
+      - type: json_path
+        file: "business-rules.json"
+        path: "$.summary.byType.LOOKUP"
+        equals: 1
+      - type: json_path
+        file: "business-rules.json"
+        path: "$.summary.byType.ERROR-HANDLING"
+        equals: 1
+      - type: json_path
+        file: "business-rules.json"
+        path: "$.rules[?(@.id=='BR-2100-COMPUTE-BILL-004')].trigger.arm"
+        equals: "DEFAULT"
+      - type: json_path
+        file: "business-rules.json"
+        path: "$.rules[?(@.id=='BR-1000-INIT-002')].type"
+        equals: "LOOKUP"
+      - type: json_path
+        file: "business-rules.json"
+        path: "$.programExit.kind"
+        equals: "GOBACK"
+    rubric:
+      - "Exactly 4 EVALUATE TRUE arms in 2100-COMPUTE-BILL are lifted: PRE, STD, PRO, and a DEFAULT rule for WHEN OTHER, all sharing one groupId."
+      - "1000-INIT yields three rules: the PERFORM VARYING init loop (BRANCHING), the EXEC SQL lookup (LOOKUP), and the SQLCODE != 0 fallback (ERROR-HANDLING grouped with the lookup)."
+      - "WS-EOF (88-level) is rendered in plain language ('End Of File reached') in the BR-2000-PROCESS-001 statement, not as 'WS-EOF-FLAG = Y'."
+      - "Every rule id matches /^BR-[A-Z0-9-]+-\\d{3}$/ and its paragraph appears in the upstream profile."
+      - "business-rules.md is <= 120 lines, groups rules by paragraph, and lists 'Profile: ./BILL010.program-profile.json' on line 1."
+    timeout: 180
+
+  - name: "schema-drift-detection"
+    fixtures:
+      - fixtures/BILL010.cob
+      - fixtures/BILL010.program-profile.json
+      - fixtures/BILL010.tampered.cob
+    prompt: |
+      Run extract-cobol-business-rules with
+      program_profile_path=fixtures/BILL010.program-profile.json but
+      program_source_path=fixtures/BILL010.tampered.cob (which has a
+      single extra blank line and therefore a different sha256). The
+      skill must hard-fail with error code E-SOURCE-DRIFT and NOT
+      write any business-rules.json.
+    assertions:
+      - type: output_contains
+        value: "E-SOURCE-DRIFT"
+      - type: file_not_exists
+        value: "business-rules.json"
+    rubric:
+      - "The skill aborts on V3 (sha256 mismatch) before writing any artifacts."
+      - "The error message names both the profile path and the source path so the operator can re-run analyze-cobol-program."
+    timeout: 120
+
+  - name: "determinism-rerun"
+    fixtures:
+      - fixtures/BILL010.cob
+      - fixtures/BILL010.program-profile.json
+      - fixtures/domain-glossary.yaml
+    prompt: |
+      Run extract-cobol-business-rules twice against the same inputs
+      in the same working directory. The second run MUST produce
+      byte-identical business-rules.json and business-rules.md.
+    assertions:
+      - type: files_byte_identical_across_runs
+        value:
+          - "business-rules.json"
+          - "business-rules.md"
+    rubric:
+      - "Rules are sorted by (startLine, id); warnings are sorted as strings; no timestamps or absolute paths leak into the output."
+    timeout: 180
+
