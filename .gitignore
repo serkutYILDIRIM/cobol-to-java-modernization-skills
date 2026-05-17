@@ -10,3 +10,47 @@
 /httpRequests/
 STATE/
 _prompts/
+
+# ─── Phase 2 additions ────────────────────────────────────────────────
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node
+node_modules/
+.pnp
+.pnp.js
+.npm
+.yarn/cache
+.yarn/install-state.gz
+
+# Java / build
+build/
+out/
+target/
+*.class
+*.jar
+*.war
+hs_err_pid*
+
+# IDE — JetBrains (workspace.xml already covered above)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# IDE — VS Code (allow settings.json, ignore the rest)
+.vscode/*
+!.vscode/settings.json
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Env
+.env
+.env.local

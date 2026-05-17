@@ -1,0 +1,106 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  markdown-lint:
+    name: Markdown lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run markdownlint-cli2
+        run: npx --yes markdownlint-cli2 "**/*.md"
+
+  plugin-schema:
+    name: Validate plugin.json against schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install ajv-cli
+        run: npm install --no-save ajv-cli@5 ajv-formats@3
+      - name: Validate plugins/*/plugin.json
+        run: |
+          # Schema URL listed in the manifest; fall back to a local copy
+          # under eng/schemas/ (added in Phase 5) if offline. <!-- VERIFY -->
+          for f in plugins/*/plugin.json; do
+            echo "Validating $f"
+            npx ajv validate \
+              -s https://agentskills.io/schemas/plugin.schema.json \
+              -d "$f" \
+              --spec=draft2020 \
+              -c ajv-formats || exit 1
+          done
+
+  marketplace-consistency:
+    name: Marketplace manifests consistent
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Diff Claude / Cursor / GitHub marketplace manifests
+        run: |
+          # All three marketplace manifests must list the same plugin set
+          # and the same versions. We normalize the JSON and diff the
+          # plugins[] arrays.
+          python3 - <<'PY'
+          import json, sys, pathlib
+          files = [
+              ".claude-plugin/marketplace.json",
+              ".cursor-plugin/marketplace.json",
+              ".github/plugin/marketplace.json",
+          ]
+          sets = []
+          for f in files:
+              data = json.loads(pathlib.Path(f).read_text())
+              sets.append(sorted((p["name"], p["version"]) for p in data["plugins"]))
+          if any(s != sets[0] for s in sets):
+              print("Marketplace manifests diverge:", sets, file=sys.stderr)
+              sys.exit(1)
+          print("OK:", sets[0])
+          PY
+
+  reference-domains:
+    name: Reference-domain allowlist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check external links against eng/known-domains.txt
+        run: |
+          # Fails if a SKILL.md or doc references a domain not present in
+          # eng/known-domains.txt. Helps prevent hallucinated URLs.
+          python3 - <<'PY'
+          import re, sys, pathlib
+          allow = {
+              line.strip()
+              for line in pathlib.Path("eng/known-domains.txt").read_text().splitlines()
+              if line.strip() and not line.startswith("#")
+          }
+          url_re = re.compile(r"https?://([^/\s)\"']+)")
+          bad = []
+          for path in pathlib.Path(".").rglob("*.md"):
+              # Skip gitignored author folders
+              if any(part in {"STATE", "_prompts", "node_modules"} for part in path.parts):
+                  continue
+              for host in url_re.findall(path.read_text(encoding="utf-8", errors="ignore")):
+                  host = host.lower()
+                  if not any(host == d or host.endswith("." + d) for d in allow):
+                      bad.append((str(path), host))
+          if bad:
+              for p, h in bad:
+                  print(f"{p}: unknown domain {h}", file=sys.stderr)
+              sys.exit(1)
+          print("All referenced domains are in eng/known-domains.txt")
+          PY
+

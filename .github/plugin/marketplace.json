@@ -1,0 +1,16 @@
+{
+  "$schema": "https://agentskills.io/schemas/marketplace.schema.json",
+  "name": "cobol-to-java-modernization-marketplace",
+  "displayName": "COBOL → Java 21 Modernization Skills",
+  "description": "Marketplace manifest (GitHub Copilot) for the cobol-modernization plugin.",
+  "version": "0.1.0",
+  "plugins": [
+    {
+      "name": "cobol-modernization",
+      "path": "../../plugins/cobol-modernization",
+      "manifest": "../../plugins/cobol-modernization/plugin.json",
+      "version": "0.1.0"
+    }
+  ]
+}
+

@@ -1,0 +1,26 @@
+# CODEOWNERS — review routing for the cobol-to-java-modernization-skills repo
+# TODO: replace @USER with the actual GitHub handle(s) before opening to contributors.
+
+# Default owner for everything
+*                                       @USER
+
+# Plugin authoring
+/plugins/                               @USER
+/plugins/cobol-modernization/           @USER
+/plugins/cobol-modernization/skills/    @USER
+
+# Tests
+/tests/                                 @USER
+
+# Marketplace manifests
+/.claude-plugin/                        @USER
+/.cursor-plugin/                        @USER
+/.github/plugin/                        @USER
+
+# Engineering tooling
+/eng/                                   @USER
+/.github/workflows/                     @USER
+
+# Docs
+/docs/                                  @USER
+

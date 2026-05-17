@@ -1,0 +1,22 @@
+# Allowlist of external domains referenced from SKILL.md and docs.
+# The validate.yml workflow fails the build if a markdown file references
+# any domain not present in this list. Add new entries with care and
+# verify the domain actually exists before merging.
+
+github.com
+raw.githubusercontent.com
+docs.spring.io
+openjdk.org
+www.mermaidchart.com
+mermaid.js.org
+proleap-cobol-parser.github.io          # <!-- VERIFY -->
+agentskills.io
+www.ibm.com
+www.iso.org
+spring.io
+junit.org
+assertj.github.io
+www.testcontainers.org
+archunit.org
+mapstruct.org
+

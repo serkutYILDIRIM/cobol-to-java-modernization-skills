@@ -1,0 +1,39 @@
+{
+  "$schema": "https://agentskills.io/schemas/plugin.schema.json",
+  "name": "cobol-modernization",
+  "version": "0.1.0",
+  "displayName": "COBOL → Java 21 Modernization",
+  "description": "Agent skills for modernizing IBM Enterprise COBOL / CICS / IMS / DB2 / VSAM workloads into idiomatic Java 21 + Spring Boot 3.x microservices.",
+  "license": "MIT",
+  "homepage": "https://github.com/OWNER/cobol-to-java-modernization-skills",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OWNER/cobol-to-java-modernization-skills.git"
+  },
+  "keywords": [
+    "cobol",
+    "java",
+    "java21",
+    "spring-boot",
+    "mainframe",
+    "modernization",
+    "strangler-fig",
+    "jcl",
+    "vsam",
+    "db2",
+    "cics"
+  ],
+  "skills": [
+    { "id": "scan-target-repo-patterns",     "path": "skills/scan-target-repo-patterns/SKILL.md" },
+    { "id": "analyze-cobol-program",         "path": "skills/analyze-cobol-program/SKILL.md" },
+    { "id": "extract-cobol-business-rules",  "path": "skills/extract-cobol-business-rules/SKILL.md" },
+    { "id": "map-mainframe-job-flow",        "path": "skills/map-mainframe-job-flow/SKILL.md" },
+    { "id": "diagram-cobol-with-mermaid",    "path": "skills/diagram-cobol-with-mermaid/SKILL.md" },
+    { "id": "convert-copybook-to-java-record", "path": "skills/convert-copybook-to-java-record/SKILL.md" },
+    { "id": "map-vsam-db2-to-jpa",           "path": "skills/map-vsam-db2-to-jpa/SKILL.md" },
+    { "id": "transpile-cobol-to-java21",     "path": "skills/transpile-cobol-to-java21/SKILL.md" },
+    { "id": "plan-strangler-fig-migration",  "path": "skills/plan-strangler-fig-migration/SKILL.md" },
+    { "id": "generate-modernization-tests",  "path": "skills/generate-modernization-tests/SKILL.md" }
+  ]
+}
+
