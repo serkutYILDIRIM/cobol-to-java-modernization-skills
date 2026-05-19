@@ -1,0 +1,110 @@
+# Eval suite for skill: map-mainframe-job-flow
+# Format: dotnet/skills-style scenarios with assertions + rubric.
+skill: map-mainframe-job-flow
+plugin: cobol-modernization
+
+scenarios:
+  - name: "billing-job-flow-with-proc"
+    fixtures:
+      - fixtures/BILL010J.jcl
+      - fixtures/procs/ARCHPROC.prc
+    prompt: |
+      Map the batch flow for fixtures/BILL010J.jcl using the
+      map-mainframe-job-flow skill. Pass jcl_paths=[fixtures/BILL010J.jcl]
+      and proc_dirs=[fixtures/procs]. Write job-flow.json and
+      job-flow.md to the current working directory.
+    assertions:
+      - type: file_exists
+        value: "job-flow.json"
+      - type: file_exists
+        value: "job-flow.md"
+      - type: output_contains
+        value: "BILL010J.STEP020"
+      - type: output_contains
+        value: "PROD.BILLING.OUTPUT"
+      - type: output_not_contains
+        value: "W-PROC-UNRESOLVED:ARCHPROC"
+      - type: json_path
+        file: "job-flow.json"
+        path: "$.jobs[0].jobName"
+        equals: "BILL010J"
+      - type: json_path
+        file: "job-flow.json"
+        path: "$.jobs[0].restart"
+        equals: "STEP020"
+      - type: json_path
+        file: "job-flow.json"
+        path: "$.metrics.jobsCount"
+        equals: 1
+      - type: json_path
+        file: "job-flow.json"
+        path: "$.metrics.stepsCount"
+        gte: 6
+      - type: json_path
+        file: "job-flow.json"
+        path: "$.metrics.programsCount"
+        gte: 5
+      - type: json_path
+        file: "job-flow.json"
+        path: "$.programs[?(@.name=='BILL010')].calledFrom[0]"
+        equals: "BILL010J.STEP020"
+      - type: json_path
+        file: "job-flow.json"
+        path: "$.datasetEdges[?(@.dsn=='PROD.BILLING.OUTPUT' && @.to=='BILL010J.STEP040')].kind"
+        equals: "READ-AFTER-WRITE"
+      - type: json_path
+        file: "job-flow.json"
+        path: "$.metrics.criticalPath[0]"
+        equals: "BILL010J.STEP020"
+    rubric:
+      - "Every EXEC PGM= is lifted (IDCAMS, BILL010, DB2LOAD, IEFBR14, IEBGENER) and each appears in programs[].calledFrom with the fully-qualified <job>.<step> id."
+      - "STEP030 is expanded via the cataloged ARCHPROC into a procStep with stepName 'STEP030.COPYSTEP' and source 'proc:ARCHPROC'."
+      - "Symbols &RUNDATE / &INDSN are substituted from SET cards; CUSTMAST DSN renders as PROD.BILLING.INPUT.CUSTMAST."
+      - "GDG references resolve to the base DSN PROD.BILLING.OUTPUT and the +1/0 bias is preserved on each ddStatement.gdgBias."
+      - "Both COND= and IF/THEN/ELSE/ENDIF are captured for STEP040/STEP041/STEP050; cyclomaticPerJob.BILL010J >= 4."
+      - "job-flow.md is <= 80 lines and references 'job-flow.json' on line 1."
+
+  - name: "unresolved-proc-warns-but-succeeds"
+    fixtures:
+      - fixtures/BILL010J.jcl
+    prompt: |
+      Run map-mainframe-job-flow against fixtures/BILL010J.jcl with
+      proc_dirs=[] so that the EXEC PROC=ARCHPROC reference cannot be
+      resolved. The skill must still emit job-flow.json (V4 is warn-only)
+      and record warning W-PROC-UNRESOLVED:ARCHPROC.
+    assertions:
+      - type: file_exists
+        value: "job-flow.json"
+      - type: output_contains
+        value: "W-PROC-UNRESOLVED:ARCHPROC"
+      - type: json_path
+        file: "job-flow.json"
+        path: "$.metrics.unresolvedProcs"
+        gte: 1
+      - type: json_path
+        file: "job-flow.json"
+        path: "$.jobs[0].steps[?(@.stepName=='STEP030')].source"
+        equals: "inline"
+    rubric:
+      - "V1–V3 still pass; the unresolved PROC produces a single sorted warning, not a hard failure."
+      - "STEP030 is kept in the step list as an inline placeholder with program=null and source='inline' so downstream consumers can detect the gap."
+    timeout: 120
+
+  - name: "determinism-rerun"
+    fixtures:
+      - fixtures/BILL010J.jcl
+      - fixtures/procs/ARCHPROC.prc
+    prompt: |
+      Run map-mainframe-job-flow twice against the same inputs in the
+      same working directory. The second run MUST produce byte-identical
+      job-flow.json and job-flow.md.
+    assertions:
+      - type: files_byte_identical_across_runs
+        value:
+          - "job-flow.json"
+          - "job-flow.md"
+    rubric:
+      - "jobs[] sorted by jobName; steps[] preserve source order within each job; datasetEdges[] sorted by (from,to,dsn); programs[] sorted by name; warnings[] sorted as strings."
+      - "No timestamps, absolute paths, or environment-dependent fields leak into the output."
+    timeout: 180
+
