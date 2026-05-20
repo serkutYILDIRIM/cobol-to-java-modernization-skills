@@ -1,5 +1,6 @@
 Session 0 => just one run
 
+promt:
 Read these two files and follow them:
 1. .copilot-conversion/prompts/prompt-00-system.md
 2. .copilot-conversion/prompts/prompt-01-scan-repo.md
@@ -18,11 +19,21 @@ Agent reponu tarar, sorular sorabilir, cevapla
 Aç ve oku! En kritik adım. Yanlış bir şey varsa düzelt.
 Chat'i kapat
 
-session 1
 
-then PAYROLL01.CBL file put to => .copilot-conversion/inbox/
+-------------
+
+Session 1 e başlamadan önce bunu yap. 
+
+Bir COBOL programını dönüştürmek istiyorsun. Diyelim: PAYROLL01.CBL
+
+C1. COBOL dosyasını aşağıdaki dizine koy
+
+PAYROLL01.CBL file put to => .copilot-conversion/inbox/
 
 
+session 1 Repo  Analizi
+
+promt:
 Read:
 1. .copilot-conversion/prompts/prompt-00-system.md
 2. .copilot-conversion/prompts/prompt-02-analyze-cobol.md
@@ -43,8 +54,9 @@ After prompt-00 reply only "READY. Awaiting phase prompt." and stop.
   Chat'i kapat.
 
 
-session 2
+session 2 Business Rules
 
+promt:
 Read:
 1. .copilot-conversion/prompts/prompt-00-system.md
 2. .copilot-conversion/prompts/prompt-03-extract-rules.md
@@ -68,8 +80,9 @@ Do not commit, do not push, do not run git.
   Chat'i kapat.
 
 
-session 3
+session 3 Mapping Planı
 
+promt:
 Read:
 1. .copilot-conversion/prompts/prompt-00-system.md
 2. .copilot-conversion/prompts/prompt-04-plan-mapping.md
@@ -92,8 +105,9 @@ Do not commit, do not push, do not run git.
   Beğendin → onayla → chat'i kapat
 
 
-session 4
+session 4 kod üretimi
 
+promt:
 Read:
 1. .copilot-conversion/prompts/prompt-00-system.md
 2. .copilot-conversion/prompts/prompt-05-implement.md
@@ -117,8 +131,9 @@ without asking first.
   Agent bitince listesi verir: "X dosya oluşturuldu, Y rule implement edildi"
   Chat'i kapat.
 
-session 5
+session 5 Tests
 
+promt:
 Read:
 1. .copilot-conversion/prompts/prompt-00-system.md
 2. .copilot-conversion/prompts/prompt-06-generate-tests.md
