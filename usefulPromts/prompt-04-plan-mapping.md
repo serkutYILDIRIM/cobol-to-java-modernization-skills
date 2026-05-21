@@ -1,44 +1,55 @@
-PHASE 3 — MAP COBOL → JAVA (PLAN ONLY, NO CODE)
+PHASE 3 — MAPPING PLAN (CROSS-SLICE, BUT INCREMENTAL)
+
+This phase produces ONE consolidated plan that covers all slices whose
+rules have already been extracted. Run it ONCE after all relevant
+02-rules-<SLICE_ID>.md files exist.
 
 PRE-FLIGHT:
-- Read repo-profile.md, 01-analysis.md, 02-rules.md.
-- All Phase 2 questions must be answered.
+- Read STATE/repo-profile.md
+- Read STATE/conversions/<PROGRAM_NAME>/01a-manifest.md
+- Read ALL files matching STATE/conversions/<PROGRAM_NAME>/02-rules-*.md
+- Do NOT read the COBOL source again.
+- Do NOT semantic-scan the whole Java repo. Instead:
+  * For each artifact TYPE you plan to create (Controller, Service,
+    Entity, Repository, DTO, Mapper, ExceptionHandler, Test):
+    - Identify ONE canonical example from repo-profile.md
+      (the path listed under "see ... for canonical example").
+    - Open ONLY that one file.
+    - Use its style as the template.
+  * If a type is missing from repo-profile.md, ASK the user to
+    point at a canonical example.
 
-STEP A — Decide the placement of new code, strictly following
-repo-profile.md. For each artifact you intend to create or modify,
-produce a row:
+PRODUCE exactly ONE file:
 
-  | Artifact | Type | Layer | Target path | New or modify? | Reason |
+STATE/conversions/<PROGRAM_NAME>/03-mapping.md
 
-Types include: Controller, Service, DomainService, UseCase, Entity,
-Repository, DTO (record), Mapper, ConfigProperties, ExceptionHandler,
-Migration script, Unit test, Integration test.
+Sections:
 
-STEP B — Map every COBOL construct to a Java home:
+1. Artifact placement table
+   | Artifact name | Type | Layer | Target path | New/Modify |
+   Canonical example | BR-IDs owned |
 
-  | COBOL element | Java home | Notes |
-  | PROCEDURE DIVISION main | <ServiceClass>.<method> | |
-  | Paragraph X | private method or extracted class | |
-  | Working-storage record | DTO record / Entity | |
-  | COPYBOOK Y | shared record in package z | |
-  | EXEC SQL Z | repository method or @Query | |
-  | EVALUATE block | switch pattern matching / Strategy | |
-  | File I/O | repository / batch step | |
+2. Construct mapping (compact table, one row per COBOL construct)
 
-STEP C — Map every BR-### rule from 02-rules.md to a concrete Java
-method (FQCN + method name). Every rule must have exactly one owner
-method. If a rule is intentionally out of scope (PARTIAL mode),
-mark it `OUT-OF-SCOPE` with reason.
+3. Rule ownership matrix
+   One row per BR-### → exactly one owner method (FQCN.method).
+   PARTIAL out-of-scope rules: mark OUT-OF-SCOPE with reason.
 
-STEP D — Identify integration points with the existing repo
-(call existing service? new endpoint? event publish?). List them
-explicitly with the existing class names verified by reading the files.
+4. Slice-to-implementation-batch grouping
+   Group artifacts into IMPLEMENTATION BATCHES so Phase 4 can
+   process them one batch per session. Rules of thumb:
+  - One batch ≤ 5 artifacts
+  - One batch should cover a coherent business sub-feature
+  - DTOs and entities go in the FIRST batch; controllers last
+    Output a table:
+    | Batch ID | Artifacts | Estimated LOC | Dependencies on |
 
-STEP E — Risk register: list anything that could break existing code,
-data, or behavior. Propose mitigations.
+5. Integration points (verified existing classes by file path)
 
-STEP F — Write `STATE/conversions/<PROGRAM_NAME>/03-mapping.md` and
-end chat with: "Plan ready. Approve to proceed to Phase 4
-(implementation)?" — STOP and wait for user approval.
+6. Risk register + mitigations
 
-DO NOT commit. DO NOT modify src/.
+End chat with:
+"Plan ready. <N> implementation batches proposed.
+Approve to proceed to Phase 4 Pass A (skeletons)?"
+
+STOP. DO NOT modify src/. DO NOT run git.

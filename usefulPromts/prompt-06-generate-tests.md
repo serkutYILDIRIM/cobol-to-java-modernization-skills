@@ -1,33 +1,44 @@
-PHASE 5 — GENERATE TESTS
+PHASE 5 — TESTS (BATCHED, ONE BATCH PER SESSION)
+
+Trigger: "Run Phase 5 for batch <BATCH_ID>".
 
 PRE-FLIGHT:
-- Read repo-profile.md and 04-implementation-log.md.
+- Read STATE/repo-profile.md
+- Read STATE/conversions/<PROGRAM_NAME>/03-mapping.md
+- Read ONLY STATE/conversions/<PROGRAM_NAME>/04b-impl-log-<BATCH_ID>.md
+  (if missing, read 04b-impl-log.md and filter to this batch)
+- Read ONLY the implementation files listed in that log
+- Open ONE canonical test example from repo-profile.md
+  (for unit tests AND, if needed, for integration tests).
 
-STEP A — For every BR-### rule implemented, create at least one
-test that:
-  - Lives in the test location/package convention from repo-profile.md
-  - Uses the project's test stack (JUnit version, AssertJ, Mockito,
-    Testcontainers, etc.)
-  - Has a name encoding the rule: e.g.,
-      shouldApplyHigherTaxBracket_whenSalaryAboveThreshold_BR003()
-  - Includes representative inputs derived from COBOL test data
-    (or asks the user for sample inputs if unclear)
+EXECUTION:
+For each BR-### implemented in this batch, create at least one test:
+- Lives in the test location/package from repo-profile.md
+- Uses the project's test stack only
+- Name encodes the rule: shouldDoX_whenY_BR_S1_003()
+- Inputs derived from COBOL test data or asked from the user
 
-STEP B — Add characterization tests for any computation that
-involves COMP-3 / BigDecimal arithmetic — pin the EXACT expected
-output to catch precision regressions.
+Add characterization tests for COMP-3 / BigDecimal computations,
+pinning exact expected outputs.
 
-STEP C — If the repo uses integration tests with Testcontainers
-or @SpringBootTest, add one happy-path integration test for the
-new endpoint or service entry point.
+If this batch includes a controller / endpoint, add ONE happy-path
+integration test (only if the repo already uses @SpringBootTest /
+Testcontainers — confirmed via repo-profile.md).
 
-STEP D — Maintain `STATE/conversions/<PROGRAM_NAME>/05-test-log.md`
-listing every test added and which BR-### it covers. Flag any
-uncovered rule.
+Pause for user accept/reject after each test file.
 
-STEP E — End chat with a coverage matrix:
-  | BR-ID | Implemented in | Test class | Test method |
-and a final note: "Conversion of <PROGRAM_NAME> complete. Review
-diffs in IntelliJ before committing."
+Append to STATE/conversions/<PROGRAM_NAME>/05-test-log-<BATCH_ID>.md:
+| BR-ID | Test class | Test method | Notes |
 
-DO NOT commit. DO NOT push. DO NOT run git.
+End chat with:
+"Tests for batch <BATCH_ID> complete. Coverage matrix above.
+Remaining batches: <list>."
+
+═══════════════════════════════════════════════════════════════════════
+ABSOLUTE RULES
+═══════════════════════════════════════════════════════════════════════
+
+- Never run mvn/gradle without asking.
+- Never commit, push, or run git.
+- Never read all impl-logs — only the one for this batch.
+- One test file at a time, pause for accept/reject.

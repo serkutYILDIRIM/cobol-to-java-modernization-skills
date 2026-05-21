@@ -1,75 +1,104 @@
-PHASE 0 — ONE-TIME REPOSITORY PROFILING
+PHASE 0 — REPOSITORY PROFILING (CHECKPOINTED, 3 FILES AT A TIME)
 
-Goal: Produce `.copilot-conversion/STATE/repo-profile.md` so every future
-conversion follows the repo's house style without re-asking.
+Goal: Produce `.copilot-conversion/STATE/repo-profile.md` plus checkpoint
+files, so a future conversion follows the repo's house style without
+re-asking and without overloading any single session.
 
-STEP A — SCAN. Inspect the workspace and extract:
+═══════════════════════════════════════════════════════════════════════
+STEP A — INITIAL RECONNAISSANCE (cheap, deterministic)
+═══════════════════════════════════════════════════════════════════════
 
-  1. Build & runtime
-     - Build tool (Maven / Gradle), exact version
-     - Java version (from pom.xml or build.gradle toolchain)
-     - Spring Boot version, key starter dependencies
-     - Any BOM or platform constraints
+Use keyword / regex / file listing tools ONLY. Do NOT read source files
+deeply yet. Produce a SHORT report in chat covering:
 
-  2. Package layout & module structure
-     - Root package (e.g., com.acme.payroll)
-     - Sub-package convention per layer
-     - Multi-module? Spring Modulith? Hexagonal? Layered? Onion?
+1. Build tool + version (from pom.xml / build.gradle / settings.gradle)
+2. Java version (from toolchain, sourceCompatibility, or release flag)
+3. Spring Boot version (from parent POM / plugins)
+4. Root package (from src/main/java/.../ deepest single chain)
+5. Folder layout (top-level src/main/java sub-packages)
+6. Approximate count of .java files
 
-  3. Naming conventions
-     - Controller / Service / Repository / Entity / DTO / Mapper suffixes
-     - Record vs class usage for DTOs
-     - Configuration class naming (`*Config`, `*Properties`)
+Ask the user up to 5 numbered questions if anything is ambiguous
+(e.g., monorepo with multiple modules — which to scan?).
 
-  4. Persistence stack
-     - JPA/Hibernate, jOOQ, MyBatis, R2DBC, JDBC?
-     - Entity annotations style (field vs property access)
-     - Repository interface naming
-     - Migration tool (Flyway/Liquibase) + folder location
+Wait for answers.
 
-  5. API style
-     - REST + Spring MVC or WebFlux?
-     - OpenAPI generation? Manual annotations? Controllers per resource?
-     - Request/response DTO conventions, validation annotations used
+═══════════════════════════════════════════════════════════════════════
+STEP B — BUILD THE SCAN PLAN
+═══════════════════════════════════════════════════════════════════════
 
-  6. Exception handling
-     - Custom exception hierarchy? `@ControllerAdvice` location?
-     - Error response shape (RFC 7807? Custom?)
+Produce `STATE/repo-scan-plan.md` listing:
 
-  7. Logging & observability
-     - SLF4J + which backend? Structured JSON logs?
-     - Tracing/metrics: Micrometer? OpenTelemetry?
+- All Java source files grouped by ARTIFACT TYPE detected by file
+  suffix / annotation keyword grep:
+  Controller, Service, Repository, Entity, DTO/Record,
+  Mapper, Configuration, ExceptionHandler, Test
+- For each type, list up to 5 CANDIDATE files to inspect deeply
+  (prefer files with many references — use simple usage-count
+  heuristics, not semantic analysis).
+- Group the candidates into checkpoints of EXACTLY 3 files each.
+- Number the checkpoints CP-01, CP-02, ...
 
-  8. Testing stack
-     - JUnit version, AssertJ/Hamcrest, Mockito version
-     - Testcontainers? ArchUnit? Pact?
-     - Integration test naming and location (`*IT`, `*IntegrationTest`)
-     - Test slice annotations used (`@DataJpaTest`, `@WebMvcTest`, etc.)
+End STEP B in chat with:
+"Scan plan ready. <N> checkpoints proposed.
+Reply `continue` to start CP-01 (3 files)."
 
-  9. Configuration
-     - `application.yml` vs `application.properties`
-     - Profile strategy (dev/staging/prod)
-     - `@ConfigurationProperties` usage
+STOP. Wait for user.
 
- 10. Code style
-     - Checkstyle / Spotless / Spotbugs configs (look for files)
-     - Lombok used? If yes, which annotations are preferred?
-     - MapStruct used? Mapper interface conventions
+═══════════════════════════════════════════════════════════════════════
+STEP C — EXECUTE ONE CHECKPOINT AT A TIME
+═══════════════════════════════════════════════════════════════════════
 
- 11. Domain glossary
-     - Skim domain packages and list 10–20 key domain terms with
-       their canonical Java types (e.g., Money → BigDecimal scale 4,
-       EmployeeId → record wrapping Long).
+Trigger: user says `continue` or `run CP-NN`.
 
-STEP B — ASK FIRST.
-If anything is ambiguous (e.g., two different naming patterns coexist),
-ASK the user up to 5 numbered questions before writing the profile.
+For the next checkpoint:
+- Open ONLY the 3 files in that checkpoint.
+- Extract per-file:
+  package, class type, annotations used, naming style,
+  exception strategy, logging usage, persistence usage,
+  validation usage, test style (if test file)
+- Append findings to `STATE/repo-scan-checkpoint-<NN>.md`
+  (one file per checkpoint).
 
-STEP C — WRITE THE PROFILE.
-Create `.copilot-conversion/STATE/repo-profile.md` containing every
-section above with CONCRETE values and concrete file path references
-(`see src/main/java/com/acme/.../FooService.java for canonical example`).
+End the checkpoint in chat with:
+"CP-<NN> done. Files analyzed: <list>.
+Remaining checkpoints: <count>.
+Reply `continue` for CP-<NN+1> or `synthesize` to build repo-profile.md now."
 
-STEP D — DO NOT COMMIT. Only write the file. End with a one-line
-summary of the most important conventions in chat so the user can
-sanity-check.
+STOP. Wait for user.
+
+═══════════════════════════════════════════════════════════════════════
+STEP D — SYNTHESIZE THE PROFILE (final checkpoint)
+═══════════════════════════════════════════════════════════════════════
+
+Trigger: user says `synthesize`.
+
+Read ALL `STATE/repo-scan-checkpoint-*.md` files. Produce ONE
+consolidated `STATE/repo-profile.md` covering:
+
+1. Build & runtime
+2. Package layout & module structure
+3. Naming conventions (per layer)
+4. Persistence stack
+5. API style
+6. Exception handling
+7. Logging & observability
+8. Testing stack
+9. Configuration
+10. Code style (Lombok / MapStruct / Checkstyle / Spotless)
+11. Domain glossary (10–20 terms with canonical Java types)
+12. CANONICAL EXAMPLES TABLE — for each artifact type, list ONE
+    exemplary file path (this is what future phases will open).
+
+End chat with a one-line summary and: "Profile complete. STATE/
+checkpoint files can be deleted now (they are not committed)."
+
+═══════════════════════════════════════════════════════════════════════
+RULES
+═══════════════════════════════════════════════════════════════════════
+
+- Maximum 3 source files per checkpoint.
+- Never load > 1500 total lines in one session.
+- Never use semantic search across the whole repo.
+- Do not commit, push, or run git.
+- Do not modify src/.
