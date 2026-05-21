@@ -1,5 +1,7 @@
 NOTES
 - Path artık: Repo/.copilot-conversion/promts/
+- "Repo" = senin Java modülü/dizinin (kendi adınla değiştir)
+- "COBOL" = COBOL PROGRAM-ID'in (örn. dosya adındaki ad; kendi adınla değiştir)
 - Klasör adı "promts" (typo korunuyor)
 - Her uzun iş checkpoint'lere bölünüyor → "continue" yazana kadar agent durur
 - Pahalı semantic search yerine önce keyword/grep
@@ -74,22 +76,22 @@ Do not commit, do not push, do not run git.
   Agent intake soruları sorar (4 numaralı). Cevap örnekleri:
 
   FULL:
-    1. Path: Repo/.copilot-conversion/inbox/COBOL.CBL
-    2. Mode: FULL
-    3. (atla)
+  1. Path: Repo/.copilot-conversion/inbox/COBOL.CBL
+  2. Mode: FULL
+  3. (atla)
 
   PARTIAL by paragraf adı:
-    1. Path: Repo/.copilot-conversion/inbox/COBOL.CBL
-    2. Mode: PARTIAL
-    3. (a) Paragraph names: CALC-TAX, CALC-NET-PAY
+  1. Path: Repo/.copilot-conversion/inbox/COBOL.CBL
+  2. Mode: PARTIAL
+  3. (a) Paragraph names: CALC-TAX, CALC-NET-PAY
 
   PARTIAL by keyword:
-    1. Path: Repo/.copilot-conversion/inbox/COBOL.CBL
-    2. Mode: PARTIAL
-    3. (b) Keywords: TAX, INTEREST, LOAN-CALC
+  1. Path: Repo/.copilot-conversion/inbox/COBOL.CBL
+  2. Mode: PARTIAL
+  3. (b) Keywords: TAX, INTEREST, LOAN-CALC
 
   PARTIAL by feature:
-    3. (d) Feature: "calculate the monthly interest on consumer loans"
+  3. (d) Feature: "calculate the monthly interest on consumer loans"
 
   Agent LOC sayar → strategy önerir (SMALL/MEDIUM/LARGE) → durur
   → "continue" yaz → Pass A başlar
@@ -402,7 +404,7 @@ Do not commit, do not push, do not run git.
 SON: Build + Commit (manuel, terminal'de)
 =========================================================================
 
-cd C:\dev\workspace\project\Repo
+cd <repo-root>/Repo
 
 mvn clean test
 grep -r "VERIFY" src/        # boş çıkmalı; kaldıysa düzelt
@@ -410,7 +412,7 @@ grep -r "VERIFY" src/        # boş çıkmalı; kaldıysa düzelt
 cd ..
 git status                    # STATE/ GÖRÜNMEMELI
 git add Repo/src/ Repo/pom.xml
-git commit -m "feat: convert COBOL COBOL (PARTIAL: TAX/INTEREST) to Java"
+git commit -m "feat: convert COBOL program (PARTIAL: TAX/INTEREST) to Java"
 git push
 
 
