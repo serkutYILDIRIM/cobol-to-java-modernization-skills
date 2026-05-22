@@ -1,0 +1,87 @@
+scenarios:
+  - name: "happy-path: render all six diagrams from full BILL010 artifact set"
+    prompt: |
+      You have these inputs at the repo root:
+        - fixtures/program-profile.json
+        - fixtures/business-rules.json
+        - fixtures/job-flow.json
+        - fixtures/options.yaml
+      Invoke the `diagram-cobol-with-mermaid` skill and write outputs under
+      `out/diagrams/`. Then summarise which files were written.
+    assertions:
+      - type: file_exists
+        value: "out/diagrams/INDEX.md"
+      - type: file_exists
+        value: "out/diagrams/paragraph-flow.mmd"
+      - type: file_exists
+        value: "out/diagrams/call-graph.mmd"
+      - type: file_exists
+        value: "out/diagrams/rule-tree.mmd"
+      - type: file_exists
+        value: "out/diagrams/job-dag.mmd"
+      - type: file_exists
+        value: "out/diagrams/data-er.mmd"
+      - type: file_exists
+        value: "out/diagrams/state-machine.mmd"
+      - type: output_contains
+        value: "flowchart TD"
+      - type: output_contains
+        value: "erDiagram"
+      - type: output_contains
+        value: "stateDiagram-v2"
+      - type: output_not_contains
+        value: "9000-EXIT -->"   # hyphen-bearing raw COBOL name must NOT appear as a Mermaid id
+    rubric:
+      - "Every .mmd file begins with the three %% header lines (diagram, source, generator)."
+      - "Node ids match ^[A-Za-z_][A-Za-z0-9_]{0,63}$ (no hyphens, no dots)."
+      - "Edges sorted by (fromId, toId, label); nodes sorted by (startLine, name)."
+      - "INDEX.md lists artifacts with their sha256 and schemaVersion under a Provenance table."
+      - "Dynamic call to WS-PRINT-MOD is rendered with dashed arrow (`-.->`)."
+    timeout: 180
+
+  - name: "partial-input: only job-flow.json present → render only job-dag, warn the rest"
+    prompt: |
+      Only `fixtures/job-flow.json` exists. Run the skill with default options.
+      Emit only diagrams whose primary input is available; record skipped
+      diagrams as warnings in INDEX.md.
+    assertions:
+      - type: file_exists
+        value: "out/diagrams/job-dag.mmd"
+      - type: file_exists
+        value: "out/diagrams/INDEX.md"
+      - type: output_contains
+        value: "W-DIAGRAM-SKIPPED:paragraph-flow:no-input"
+      - type: output_contains
+        value: "W-DIAGRAM-SKIPPED:rule-tree:no-input"
+      - type: output_contains
+        value: "W-DIAGRAM-SKIPPED:state-machine:no-input"
+      - type: output_not_contains
+        value: "E-NO-INPUT"
+    rubric:
+      - "Skill does not abort when optional inputs are missing."
+      - "Warnings are sorted alphabetically inside INDEX.md."
+      - "No empty .mmd files are produced for skipped kinds."
+    timeout: 120
+
+  - name: "determinism: byte-identical output across two reruns on same inputs"
+    prompt: |
+      Run the skill twice in succession with identical inputs
+      (fixtures/program-profile.json + fixtures/business-rules.json +
+      fixtures/job-flow.json + fixtures/options.yaml). After the second run,
+      assert all generated files are byte-identical to the first run.
+    assertions:
+      - type: files_byte_identical_across_runs
+        value:
+          - "out/diagrams/INDEX.md"
+          - "out/diagrams/paragraph-flow.mmd"
+          - "out/diagrams/call-graph.mmd"
+          - "out/diagrams/rule-tree.mmd"
+          - "out/diagrams/job-dag.mmd"
+          - "out/diagrams/data-er.mmd"
+          - "out/diagrams/state-machine.mmd"
+    rubric:
+      - "Node id hashes are derived deterministically from (name, startLine)."
+      - "All collections are sorted before emission; no timestamp is written."
+      - "UTF-8, LF line endings, single trailing newline."
+    timeout: 180
+

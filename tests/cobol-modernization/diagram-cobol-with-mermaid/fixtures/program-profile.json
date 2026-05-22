@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "source": {
+    "path": "src/cobol/BILL010.cob",
+    "sha256": "REPLACE_WITH_SHA256_OF_NORMALISED_BILL010_COB"
+  },
+  "programId": "BILL010",
+  "paragraphs": [
+    { "name": "0000-MAIN",             "section": "MAIN",    "startLine":  80, "endLine": 130 },
+    { "name": "1000-INIT",             "section": "MAIN",    "startLine": 135, "endLine": 180 },
+    { "name": "2000-PROCESS-CUSTOMER", "section": "PROCESS", "startLine": 185, "endLine": 260 },
+    { "name": "2100-VALIDATE",         "section": "PROCESS", "startLine": 265, "endLine": 320 },
+    { "name": "2200-CALC-CHARGES",     "section": "PROCESS", "startLine": 325, "endLine": 410 },
+    { "name": "2300-WRITE-INVOICE",    "section": "PROCESS", "startLine": 415, "endLine": 470 },
+    { "name": "9000-EXIT",             "section": "EXIT",    "startLine": 475, "endLine": 490 }
+  ],
+  "performs": [
+    { "from": "0000-MAIN",             "to": "1000-INIT",             "kind": "PERFORM" },
+    { "from": "0000-MAIN",             "to": "2000-PROCESS-CUSTOMER", "kind": "PERFORM UNTIL", "label": "EOF-CUST = 'Y'" },
+    { "from": "0000-MAIN",             "to": "9000-EXIT",             "kind": "PERFORM" },
+    { "from": "2000-PROCESS-CUSTOMER", "to": "2100-VALIDATE",         "kind": "PERFORM" },
+    { "from": "2000-PROCESS-CUSTOMER", "to": "2200-CALC-CHARGES",     "kind": "PERFORM" },
+    { "from": "2000-PROCESS-CUSTOMER", "to": "2300-WRITE-INVOICE",    "kind": "PERFORM" }
+  ],
+  "calls": [
+    { "from": "2200-CALC-CHARGES",  "target": "TAXCALC",      "kind": "STATIC" },
+    { "from": "2300-WRITE-INVOICE", "target": "WS-PRINT-MOD", "kind": "DYNAMIC", "expr": "WS-PRINT-MOD" }
+  ],
+  "dataItems": [
+    { "name": "CUSTOMER-REC", "usage": "FILE",  "copybook": "CUSTREC", "level": "01" },
+    { "name": "INVOICE-REC",  "usage": "FILE",  "copybook": "INVREC",  "level": "01" },
+    { "name": "TAX-TABLE",    "usage": "TABLE", "copybook": "TAXTBL",  "level": "01" },
+    { "name": "WS-STATUS",    "usage": "WORK",  "copybook": null,      "level": "01", "valueClause": "'N'" }
+  ],
+  "warnings": []
+}
+

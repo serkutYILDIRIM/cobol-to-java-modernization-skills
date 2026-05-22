@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0",
+  "sources": ["BILL010J.jcl", "procs/ARCHPROC.prc"],
+  "symbolOverrides": {},
+  "jobs": [
+    {
+      "jobName": "BILL010J",
+      "class": "A",
+      "msgClass": "X",
+      "restart": null,
+      "jcllib": ["PROD.PROCLIB"],
+      "joblib": ["PROD.LOADLIB"],
+      "steps": [
+        {
+          "stepName": "STEP010",
+          "source": "BILL010J.jcl",
+          "program": "IDCAMS",
+          "programDynamic": false,
+          "steplib": null,
+          "cond": null,
+          "ifGuard": null,
+          "chkpt": null,
+          "ddStatements": [
+            { "ddName": "SYSPRINT", "sysout": "*" },
+            { "ddName": "SYSIN", "instream": true, "instreamLines": ["  DEFINE CLUSTER (NAME(PAY.CUST.VSAM) ...)"] }
+          ]
+        },
+        {
+          "stepName": "STEP020",
+          "source": "BILL010J.jcl",
+          "program": "BILL010",
+          "programDynamic": false,
+          "steplib": "PROD.LOADLIB",
+          "cond": "(0,NE,STEP010)",
+          "ifGuard": null,
+          "chkpt": null,
+          "ddStatements": [
+            { "ddName": "CUSTFILE", "dsn": "PAY.CUST.VSAM", "disp": ["SHR","KEEP","KEEP"] },
+            { "ddName": "INVFILE",  "dsn": "PAY.INV.GDG(+1)", "disp": ["NEW","CATLG","DELETE"], "gdg": true, "gdgBias": 1 }
+          ]
+        },
+        {
+          "stepName": "STEP030.COPYSTEP",
+          "source": "procs/ARCHPROC.prc",
+          "program": "IEBGENER",
+          "programDynamic": false,
+          "steplib": null,
+          "cond": null,
+          "ifGuard": "RC=0",
+          "chkpt": null,
+          "ddStatements": [
+            { "ddName": "SYSUT1", "dsn": "PAY.INV.GDG(+1)", "disp": ["SHR","KEEP","KEEP"] },
+            { "ddName": "SYSUT2", "dsn": "PAY.INV.ARCH",    "disp": ["NEW","CATLG","DELETE"] }
+          ]
+        }
+      ],
+      "conditions": []
+    }
+  ],
+  "programs": ["BILL010", "IDCAMS", "IEBGENER", "TAXCALC"],
+  "datasetEdges": [
+    { "from": "STEP010", "to": "STEP020",          "dsn": "PAY.CUST.VSAM",   "mode": "DEFINE->READ" },
+    { "from": "STEP020", "to": "STEP030.COPYSTEP", "dsn": "PAY.INV.GDG(+1)", "mode": "WRITE->READ"  }
+  ],
+  "metrics": {
+    "jobsCount": 1,
+    "stepsCount": 3,
+    "programsCount": 4,
+    "cyclomaticPerJob": { "BILL010J": 2 },
+    "unresolvedProcs": 0,
+    "unresolvedIncludes": 0,
+    "dynamicProgramRefs": 0,
+    "criticalPath": ["STEP010", "STEP020", "STEP030.COPYSTEP"]
+  },
+  "warnings": [],
+  "chaining": { "styleProfileSeen": false, "profileSchemaVersion": "1.0" }
+}
+
