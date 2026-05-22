@@ -1,0 +1,16 @@
+diagrams:
+  - paragraph-flow
+  - call-graph
+  - rule-tree
+  - job-dag
+  - data-er
+  - state-machine
+maxNodesPerDiagram: 60
+maxEdgesPerDiagram: 120
+includeRuleBadges: true
+includeLineNumbers: true
+direction:
+  paragraph-flow: TD
+  call-graph: LR
+  job-dag: LR
+
