@@ -1,0 +1,112 @@
+scenarios:
+  - name: billrec-happy-path
+    prompt: |
+      Convert the COBOL copybook at fixtures/BILLREC.CPY into Java 21
+      records under the package com.acme.billing.cobol. Treat the host
+      encoding as ibm-1047. Apply no REPLACING. Emit copybook-mapping.json
+      alongside the .java files. Do not generate JPA entities; this is a
+      DTO-only conversion. Use the convert-copybook-to-java-record skill.
+    assertions:
+      - type: file_exists
+        value: copybook-mapping.json
+      - type: file_exists
+        value: com/acme/billing/cobol/BillRec.java
+      - type: file_exists
+        value: com/acme/billing/cobol/BillAddrAreaVariant.java
+      - type: file_exists
+        value: com/acme/billing/cobol/BillAddrAreaVariantPrimary.java
+      - type: file_exists
+        value: com/acme/billing/cobol/BillAddrAreaVariantRedef1.java
+      - type: output_contains
+        value: "public sealed interface BillAddrAreaVariant"
+      - type: output_contains
+        value: "permits BillAddrAreaVariantPrimary, BillAddrAreaVariantRedef1"
+      - type: output_contains
+        value: "public record BillRec("
+      - type: output_contains
+        value: "List<BillChargeItem>"
+      - type: output_contains
+        value: "BigDecimal totalDue"
+      - type: output_contains
+        value: "public static boolean isStatusActive"
+      - type: output_not_contains
+        value: "@Entity"
+      - type: output_not_contains
+        value: "public class BillRec"
+      - type: json_path
+        path: "$.schemaVersion"
+        equals: "1.0"
+      - type: json_path
+        path: "$.javaPackage"
+        equals: "com.acme.billing.cobol"
+      - type: json_path
+        path: "$.records[0].javaName"
+        equals: "BillRec"
+      - type: json_path
+        path: "$.records[0].byteLength"
+        gte: 256
+      - type: json_path
+        path: "$.variants[0].sealedInterface"
+        equals: "BillAddrAreaVariant"
+    rubric:
+      - "Every COBOL 01-level group yields exactly one top-level Java record."
+      - "REDEFINES family is modelled as a sealed interface with one record per variant."
+      - "OCCURS DEPENDING ON becomes List<T>, never a fixed-size array."
+      - "COMP-3 PIC S9(7)V99 maps to BigDecimal with scale=2 in the JSON mapping."
+      - "88-level condition names become static is* boolean helpers, not enum constants."
+      - "Numeric edited PIC ($$,$$$,$$9.99CR) is String with displayFormat set, and emits W-EDITED-AS-STRING."
+      - "No JPA, no @Entity, no mutable fields."
+      - "All emitted .java files parse under javac --release 21."
+    timeout: 240
+
+  - name: reserved-and-collision-names
+    prompt: |
+      Convert fixtures/RESERVED.CPY into Java 21 records under
+      com.example.sample. The copybook contains a field named CLASS and
+      two siblings both normalising to "amount". Verify the skill renames
+      collisions deterministically and emits warnings.
+    assertions:
+      - type: file_exists
+        value: copybook-mapping.json
+      - type: file_exists
+        value: com/example/sample/SampleRec.java
+      - type: output_contains
+        value: "class_"
+      - type: output_contains
+        value: "amount_2"
+      - type: json_path
+        path: "$.warnings"
+        contains: "W-NAME-RESERVED:CLASS"
+      - type: json_path
+        path: "$.warnings"
+        contains: "W-NAME-COLLISION:amount_2"
+    rubric:
+      - "Reserved Java keyword CLASS is suffixed with underscore (class_)."
+      - "Second collision of 'amount' becomes amount_2 (1-based numeric suffix from 2)."
+      - "Warnings array is sorted and contains both codes."
+    timeout: 180
+
+  - name: determinism-rerun
+    prompt: |
+      Run convert-copybook-to-java-record twice on fixtures/BILLREC.CPY
+      with identical inputs (com.acme.billing.cobol, ibm-1047). The two
+      runs must produce byte-identical copybook-mapping.json and
+      byte-identical .java files (sorted arrays, no timestamps, LF
+      endings, single trailing newline).
+    assertions:
+      - type: files_byte_identical_across_runs
+        files:
+          - copybook-mapping.json
+          - com/acme/billing/cobol/BillRec.java
+          - com/acme/billing/cobol/BillAddrAreaVariant.java
+          - com/acme/billing/cobol/BillAddrAreaVariantPrimary.java
+          - com/acme/billing/cobol/BillAddrAreaVariantRedef1.java
+          - com/acme/billing/cobol/BillCharges.java
+          - com/acme/billing/cobol/BillChargeItem.java
+          - com/acme/billing/cobol/BillKey.java
+    rubric:
+      - "Two consecutive runs over the same copybook produce identical bytes."
+      - "Arrays in JSON are sorted by (byteOffset, javaName)."
+      - "No timestamps or absolute paths in any emitted file."
+    timeout: 240
+
