@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0",
+  "program": {
+    "id": "BILL010",
+    "path": "src/cobol/BILL010.cob",
+    "type": "BATCH",
+    "sourceFormat": "fixed"
+  },
+  "data": {
+    "copybooks": [
+      { "member": "BILLREC", "path": "src/cobol/copy/BILLREC.CPY",
+        "resolved": true, "replacing": [] }
+    ],
+    "files": [
+      {
+        "fdName": "BILL-CUST-FILE",
+        "ddName": "CUSTKSDS",
+        "datasetHint": "BILL.CUST.KSDS",
+        "accessMethod": "VSAM-KSDS",
+        "organization": "INDEXED",
+        "accessMode": "DYNAMIC",
+        "recordName": "BILL-CUST-REC",
+        "copybook": "BILLREC",
+        "recordKey": ["BILL-CUST-ID"],
+        "alternateRecordKey": [
+          { "fields": ["BILL-CUST-SSN"], "withDuplicates": false }
+        ]
+      }
+    ],
+    "dbAccess": [
+      {
+        "subsystem": "DB2",
+        "tables": [
+          {
+            "schema": "BILLDB",
+            "name": "CUSTOMER",
+            "primaryKey": ["CUST_ID"],
+            "columns": [
+              { "name": "CUST_ID",     "type": "BIGINT",         "nullable": false },
+              { "name": "CUST_SSN",    "type": "CHAR(11)",       "nullable": false },
+              { "name": "CUST_NAME",   "type": "VARCHAR(60)",    "nullable": false },
+              { "name": "OPENED_ON",   "type": "DATE",           "nullable": false },
+              { "name": "STATUS",      "type": "CHAR(1)",        "nullable": false, "default": "'A'" },
+              { "name": "BALANCE",     "type": "DECIMAL(13,2)",  "nullable": false }
+            ]
+          }
+        ],
+        "statements": [
+          { "id": "stmt-001", "kind": "SELECT",
+            "table": "BILLDB.CUSTOMER",
+            "predicate": "CUST_ID = :WS-CUST-ID",
+            "intoHostVars": ["WS-CUST-NAME","WS-BALANCE"] },
+          { "id": "stmt-014", "kind": "CURSOR",
+            "table": "BILLDB.CUSTOMER",
+            "predicate": "STATUS = 'A' AND OPENED_ON >= :WS-SINCE",
+            "withHold": false, "forUpdate": false },
+          { "id": "stmt-022", "kind": "UPDATE",
+            "table": "BILLDB.CUSTOMER",
+            "setCols": ["BALANCE"],
+            "predicate": "CUST_ID = :WS-CUST-ID" }
+        ]
+      }
+    ]
+  }
+}
+
