@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "source": {
+    "path": "src/cobol/copy/BILLREC.CPY",
+    "format": "fixed",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "hostEncoding": "ibm-1047"
+  },
+  "copybook": { "member": "BILLREC", "replacingApplied": [] },
+  "javaPackage": "com.acme.billing.cobol",
+  "records": [
+    {
+      "javaName": "BillCustomer",
+      "javaFile": "com/acme/billing/cobol/BillCustomer.java",
+      "fromCobolName": "BILL-CUST-REC",
+      "fromStartLine": 1,
+      "byteLength": 92,
+      "fields": [
+        { "javaName": "custId", "javaType": "long",
+          "fromCobolName": "BILL-CUST-ID",
+          "level": 5, "picture": "S9(10) COMP", "usage": "BINARY",
+          "byteOffset": 0, "byteLength": 8, "scale": 0, "signed": true,
+          "nullable": false, "occurs": null, "redefines": null,
+          "conditionNames": [], "originalLine": 2 },
+        { "javaName": "custSsn", "javaType": "String",
+          "fromCobolName": "BILL-CUST-SSN",
+          "level": 5, "picture": "X(11)", "usage": "DISPLAY",
+          "byteOffset": 8, "byteLength": 11, "scale": 0, "signed": false,
+          "nullable": false, "occurs": null, "redefines": null,
+          "conditionNames": [], "originalLine": 3 },
+        { "javaName": "custName", "javaType": "String",
+          "fromCobolName": "BILL-CUST-NAME",
+          "level": 5, "picture": "X(60)", "usage": "DISPLAY",
+          "byteOffset": 19, "byteLength": 60, "scale": 0, "signed": false,
+          "nullable": false, "occurs": null, "redefines": null,
+          "conditionNames": [], "originalLine": 4 },
+        { "javaName": "balance", "javaType": "BigDecimal",
+          "fromCobolName": "BILL-BALANCE",
+          "level": 5, "picture": "S9(11)V99 COMP-3", "usage": "PACKED-DECIMAL",
+          "byteOffset": 79, "byteLength": 13, "scale": 2, "signed": true,
+          "nullable": false, "occurs": null, "redefines": null,
+          "conditionNames": [], "originalLine": 5 }
+      ],
+      "conditionNames": []
+    }
+  ],
+  "variants": [],
+  "warnings": [],
+  "chaining": {
+    "styleProfileSeen": false,
+    "profileSchemaVersion": null,
+    "programProfileSeen": false
+  }
+}
+

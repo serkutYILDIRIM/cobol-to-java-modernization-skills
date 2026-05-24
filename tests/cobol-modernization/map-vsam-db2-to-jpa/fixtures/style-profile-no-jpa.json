@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "buildTool": "maven",
+  "javaVersion": "21",
+  "packageLayout": {
+    "root": "com.acme.billing",
+    "persistence": "com.acme.billing.persistence",
+    "dto": "com.acme.billing.cobol"
+  },
+  "namingConventions": { "tables": "snake_case", "columns": "snake_case" },
+  "architectureStyle": "hexagonal",
+  "dtoConvention": "java-record",
+  "exceptionHandling": "controller-advice",
+  "loggingStack": "slf4j",
+  "testStack": ["junit5","assertj"],
+  "apiStyle": "spring-mvc",
+  "persistenceStack": ["jdbc-template"],
+  "configStrategy": "yaml",
+  "codeStyleConfig": ".editorconfig"
+}
+

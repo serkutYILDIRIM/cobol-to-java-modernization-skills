@@ -1,0 +1,129 @@
+scenarios:
+  - name: db2-and-vsam-happy-path
+    prompt: |
+      Read fixtures/BILL010.program-profile.json and the companion
+      fixtures/BILLREC.copybook-mapping.json. Map the persistent data
+      surface of BILL010 onto Spring Data JPA artefacts under the
+      package com.acme.billing.persistence. Use vsam_strategy
+      "jpa-table+codec" and emit_ddl true. Emit jpa-mapping.json,
+      one @Entity per VSAM file and per DB2 table, one
+      JpaRepository per entity, and one Flyway-style DDL per DB2
+      table. Do not generate procedural code or service classes.
+      Use the map-vsam-db2-to-jpa skill.
+    assertions:
+      - type: file_exists
+        value: jpa-mapping.json
+      - type: file_exists
+        value: com/acme/billing/persistence/Customer.java
+      - type: file_exists
+        value: com/acme/billing/persistence/CustomerRepository.java
+      - type: file_exists
+        value: com/acme/billing/persistence/BillCustomerEntity.java
+      - type: file_exists
+        value: com/acme/billing/persistence/BillCustomerEntityRepository.java
+      - type: file_exists
+        value: db/migration/V1__CUSTOMER.sql
+      - type: output_contains
+        value: "import jakarta.persistence.Entity;"
+      - type: output_contains
+        value: "@Table(schema = \"BILLDB\", name = \"CUSTOMER\")"
+      - type: output_contains
+        value: "extends JpaRepository<Customer, Long>"
+      - type: output_contains
+        value: "extends JpaRepository<BillCustomerEntity, Long>"
+      - type: output_contains
+        value: "Optional<BillCustomerEntity> findByCustSsn(String custSsn);"
+      - type: output_contains
+        value: "@Modifying"
+      - type: output_contains
+        value: "update Customer c set c.balance = :balance where c.custId = :custId"
+      - type: output_contains
+        value: "BigDecimal balance"
+      - type: output_contains
+        value: "precision = 13, scale = 2"
+      - type: output_contains
+        value: "LocalDate openedOn"
+      - type: output_not_contains
+        value: "javax.persistence"
+      - type: output_not_contains
+        value: "public record Customer"
+      - type: output_not_contains
+        value: "public record BillCustomerEntity"
+      - type: json_path
+        path: "$.schemaVersion"
+        equals: "1.0"
+      - type: json_path
+        path: "$.javaPackage"
+        equals: "com.acme.billing.persistence"
+      - type: json_path
+        path: "$.source.vsamStrategy"
+        equals: "jpa-table+codec"
+      - type: json_path
+        path: "$.entities[?(@.entityClass=='Customer')].table.schema"
+        equals: "BILLDB"
+      - type: json_path
+        path: "$.entities[?(@.entityClass=='BillCustomerEntity')].kind"
+        equals: "VSAM-KSDS"
+      - type: json_path
+        path: "$.entities[?(@.entityClass=='BillCustomerEntity')].alternateKeys[0].unique"
+        equals: true
+    rubric:
+      - "Every VSAM file with a resolvable RECORD KEY becomes exactly one @Entity + JpaRepository."
+      - "Every DB2 table referenced by data.dbAccess[].tables[] becomes exactly one @Entity + JpaRepository."
+      - "DB2 schema/table names are preserved in original case (BILLDB.CUSTOMER), never lowercased."
+      - "DECIMAL(13,2) maps to BigDecimal with precision=13, scale=2."
+      - "DATE maps to java.time.LocalDate with columnDefinition=\"DATE\"."
+      - "Cursor stmt-014 becomes a Stream<Customer>-returning @Query method whose name encodes the predicate."
+      - "UPDATE stmt-022 becomes a @Modifying @Query method (never silently mapped to save)."
+      - "Alternate VSAM key without WITH DUPLICATES becomes a unique @Index."
+      - "All emitted .java files use jakarta.persistence.* — never javax.persistence.*."
+      - "Entities are mutable classes with protected no-arg ctor; equals/hashCode key on @Id only; toString never leaks row data."
+    timeout: 240
+
+  - name: persistence-stack-mismatch
+    prompt: |
+      Map fixtures/BILL010.program-profile.json with
+      fixtures/style-profile-no-jpa.json (whose persistenceStack is
+      ["jdbc-template"], not jpa). The skill must hard-fail with
+      E-PERSISTENCE-MISMATCH and emit no .java files.
+    assertions:
+      - type: output_contains
+        value: "E-PERSISTENCE-MISMATCH"
+      - type: file_not_exists
+        value: com/acme/billing/persistence/Customer.java
+      - type: file_not_exists
+        value: jpa-mapping.json
+    rubric:
+      - "Skill refuses to emit JPA artefacts when persistenceStack lacks 'jpa'."
+      - "Failure is recorded as the exact code E-PERSISTENCE-MISMATCH."
+    timeout: 120
+
+  - name: missing-copybook-mapping
+    prompt: |
+      Run map-vsam-db2-to-jpa against
+      fixtures/BILL010.program-profile.json but DO NOT pass any
+      copybook_mappings. The VSAM file BILL-CUST-FILE references
+      copybook BILLREC which is now unresolvable; the DB2 table
+      BILLDB.CUSTOMER has inline columns and must still be emitted.
+      Verify the skill emits Customer.java + CustomerRepository.java,
+      skips the VSAM entity, and records
+      W-COPYBOOK-MISSING:BILL-CUST-REC in warnings.
+    assertions:
+      - type: file_exists
+        value: jpa-mapping.json
+      - type: file_exists
+        value: com/acme/billing/persistence/Customer.java
+      - type: file_not_exists
+        value: com/acme/billing/persistence/BillCustomerEntity.java
+      - type: json_path
+        path: "$.warnings"
+        contains: "W-COPYBOOK-MISSING:BILL-CUST-REC"
+      - type: json_path
+        path: "$.entities[?(@.entityClass=='Customer')].kind"
+        equals: "DB2"
+    rubric:
+      - "DB2 entity is still emitted when its copybook/DCLGEN context is self-sufficient."
+      - "VSAM entity is skipped (not aborted) when the matching copybook-mapping.json is absent."
+      - "Warning code W-COPYBOOK-MISSING uses the record name from data.files[].recordName."
+    timeout: 180
+
