@@ -1,0 +1,16 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. THRU01.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01  WS-CTR  PIC 9(03) VALUE 0.
+       PROCEDURE DIVISION.
+       0000-MAIN SECTION.
+           PERFORM 1000-A THRU 1000-C.
+           GOBACK.
+       1000-A SECTION.
+           ADD 1 TO WS-CTR.
+       1000-B SECTION.
+           ADD 1 TO WS-CTR.
+       1000-C SECTION.
+           ADD 1 TO WS-CTR.
+
