@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0",
+  "source": {
+    "path": "tests/cobol-modernization/transpile-cobol-to-java21/fixtures/BILL010.cob",
+    "sha256": "REPLACE_WITH_SHA256_OF_BILL010_COB"
+  },
+  "rules": [
+    {
+      "id": "BR-BILLING-001",
+      "groupId": "VALIDATE-CUSTOMER",
+      "type": "VALIDATION",
+      "trigger": { "head": "EVALUATE TRUE", "arm": "LK-CUST-ID = SPACES", "priority": 1 },
+      "paragraph": "1000-VALIDATE-CUSTOMER",
+      "startLine": 22,
+      "dataItems": { "reads": ["LK-CUST-ID"], "writes": ["WS-CUST-STATUS"] },
+      "confidence": 0.97,
+      "reachable": true,
+      "programExit": false
+    },
+    {
+      "id": "BR-BILLING-002",
+      "groupId": "VALIDATE-CUSTOMER",
+      "type": "VALIDATION",
+      "trigger": { "head": "EVALUATE TRUE", "arm": "LK-BALANCE < 0", "priority": 2 },
+      "paragraph": "1000-VALIDATE-CUSTOMER",
+      "startLine": 24,
+      "dataItems": { "reads": ["LK-BALANCE"], "writes": ["WS-CUST-STATUS"] },
+      "confidence": 0.97,
+      "reachable": true,
+      "programExit": false
+    },
+    {
+      "id": "BR-BILLING-003",
+      "groupId": "CALC-CHARGES",
+      "type": "CALCULATION",
+      "trigger": { "head": "COMPUTE", "arm": "WS-CHARGE = LK-BALANCE * 0.015", "priority": 1 },
+      "paragraph": "2000-CALC-CHARGES",
+      "startLine": 30,
+      "dataItems": { "reads": ["LK-BALANCE"], "writes": ["WS-CHARGE"] },
+      "confidence": 0.99,
+      "reachable": true,
+      "programExit": false
+    },
+    {
+      "id": "BR-BILLING-004",
+      "groupId": "CALC-CHARGES",
+      "type": "IO-EFFECT",
+      "trigger": { "head": "EXEC SQL", "arm": "UPDATE BILLDB.CUSTOMER", "priority": 2 },
+      "paragraph": "2000-CALC-CHARGES",
+      "startLine": 32,
+      "dataItems": { "reads": ["WS-CHARGE", "LK-CUST-ID"], "writes": ["BILLDB.CUSTOMER.LAST_CHARGE"] },
+      "confidence": 0.95,
+      "reachable": true,
+      "programExit": false
+    }
+  ],
+  "warnings": [],
+  "chaining": { "styleProfileSeen": true, "profileSchemaVersion": "1.0" }
+}
+
