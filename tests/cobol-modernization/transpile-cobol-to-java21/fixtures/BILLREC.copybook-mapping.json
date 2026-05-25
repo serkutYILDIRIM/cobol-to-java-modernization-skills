@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "source": {
+    "path": "tests/cobol-modernization/transpile-cobol-to-java21/fixtures/BILLREC.CPY",
+    "format": "fixed",
+    "sha256": "REPLACE_WITH_SHA256_OF_BILLREC_CPY",
+    "hostEncoding": "IBM-1047"
+  },
+  "copybook": { "member": "BILLREC", "replacingApplied": [] },
+  "javaPackage": "com.acme.billing.dto",
+  "records": [
+    {
+      "javaName": "BillRecord",
+      "javaFile": "com/acme/billing/dto/BillRecord.java",
+      "fromCobolName": "LK-BILL-INPUT",
+      "fromStartLine": 1,
+      "byteLength": 256,
+      "fields": [
+        {
+          "javaName": "custId",
+          "javaType": "String",
+          "fromCobolName": "LK-CUST-ID",
+          "level": 5,
+          "picture": "X(10)",
+          "usage": "DISPLAY",
+          "byteOffset": 0,
+          "byteLength": 10,
+          "signed": false,
+          "nullable": false
+        },
+        {
+          "javaName": "balance",
+          "javaType": "BigDecimal",
+          "fromCobolName": "LK-BALANCE",
+          "level": 5,
+          "picture": "S9(7)V99",
+          "usage": "COMP-3",
+          "byteOffset": 10,
+          "byteLength": 5,
+          "scale": 2,
+          "signed": true,
+          "nullable": false
+        }
+      ],
+      "conditionNames": []
+    }
+  ],
+  "variants": [],
+  "warnings": [],
+  "chaining": { "styleProfileSeen": true, "profileSchemaVersion": "1.0", "programProfileSeen": true }
+}
+
