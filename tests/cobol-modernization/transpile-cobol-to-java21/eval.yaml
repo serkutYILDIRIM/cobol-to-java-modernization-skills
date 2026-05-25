@@ -1,0 +1,90 @@
+scenarios:
+  - name: "bill010-happy-path"
+    prompt: |
+      Transpile the COBOL program BILL010 into Java 21.
+      Inputs:
+        cobol_source_path:      tests/cobol-modernization/transpile-cobol-to-java21/fixtures/BILL010.cob
+        program_profile_path:   tests/cobol-modernization/transpile-cobol-to-java21/fixtures/BILL010.program-profile.json
+        business_rules_path:    tests/cobol-modernization/transpile-cobol-to-java21/fixtures/BILL010.business-rules.json
+        copybook_mapping_paths: [tests/cobol-modernization/transpile-cobol-to-java21/fixtures/BILLREC.copybook-mapping.json]
+        jpa_mapping_path:       tests/cobol-modernization/transpile-cobol-to-java21/fixtures/BILL010.jpa-mapping.json
+        style_profile_path:     tests/cobol-modernization/transpile-cobol-to-java21/fixtures/style-profile.json
+        out_dir:                out/java/
+    assertions:
+      - type: file_exists
+        value: out/java/com/acme/billing/legacy/bill010/Bill010Service.java
+      - type: file_exists
+        value: out/java/com/acme/billing/legacy/bill010/ValidateCustomerOutcome.java
+      - type: file_exists
+        value: out/java/transpile-report.json
+      - type: output_contains
+        value: "@Service"
+      - type: output_contains
+        value: "@Transactional"
+      - type: output_contains
+        value: "sealed interface ValidateCustomerOutcome"
+      - type: output_contains
+        value: "// BR-BILLING-001"
+      - type: output_contains
+        value: "// BR-BILLING-004"
+      - type: output_not_contains
+        value: "PERFORM"
+      - type: json_path
+        path: "$.schemaVersion"
+        equals: "1.0"
+        file: out/java/transpile-report.json
+      - type: json_path
+        path: "$.rules[*].id"
+        contains: "BR-BILLING-003"
+        file: out/java/transpile-report.json
+    rubric:
+      - "Java compiles under --release 21 with no errors."
+      - "Every rule id in business-rules.json appears exactly once in transpile-report.json#/rules[*].id."
+      - "BillRecord and Customer are imported from the existing dto/persistence packages — no new POJOs invented."
+      - "BigDecimal arithmetic uses an explicit MathContext or RoundingMode."
+      - "EVALUATE TRUE lowered to a sealed interface + pattern-matching switch."
+    timeout: 240
+
+  - name: "perform-thru-hard-fail"
+    prompt: |
+      Transpile a program whose profile contains a PERFORM …​ THRU.
+      Expect a hard-fail with E-PERFORM-THRU-UNSUPPORTED and no .java files
+      under out/java/.
+      Inputs:
+        cobol_source_path:      tests/cobol-modernization/transpile-cobol-to-java21/fixtures/THRU01.cob
+        program_profile_path:   tests/cobol-modernization/transpile-cobol-to-java21/fixtures/THRU01.program-profile.json
+        business_rules_path:    tests/cobol-modernization/transpile-cobol-to-java21/fixtures/THRU01.business-rules.json
+        copybook_mapping_paths: []
+        out_dir:                out/java/
+    assertions:
+      - type: output_contains
+        value: "E-PERFORM-THRU-UNSUPPORTED"
+      - type: file_not_exists
+        value: out/java/com/acme/legacy/thru01/Thru01Service.java
+    rubric:
+      - "Skill exits with a hard-fail before writing any .java file."
+      - "The hard-fail code is E-PERFORM-THRU-UNSUPPORTED, not a generic error."
+    timeout: 120
+
+  - name: "determinism-rerun"
+    prompt: |
+      Run the bill010-happy-path scenario twice into two different out directories
+      (out/run1/ and out/run2/) and diff every emitted file byte-for-byte.
+    assertions:
+      - type: files_byte_identical_across_runs
+        value:
+          - out/run1/java/com/acme/billing/legacy/bill010/Bill010Service.java
+          - out/run2/java/com/acme/billing/legacy/bill010/Bill010Service.java
+      - type: files_byte_identical_across_runs
+        value:
+          - out/run1/java/com/acme/billing/legacy/bill010/ValidateCustomerOutcome.java
+          - out/run2/java/com/acme/billing/legacy/bill010/ValidateCustomerOutcome.java
+      - type: files_byte_identical_across_runs
+        value:
+          - out/run1/java/transpile-report.json
+          - out/run2/java/transpile-report.json
+    rubric:
+      - "All emitted artefacts are byte-identical across two runs."
+      - "No timestamp appears in any emitted file."
+    timeout: 240
+
