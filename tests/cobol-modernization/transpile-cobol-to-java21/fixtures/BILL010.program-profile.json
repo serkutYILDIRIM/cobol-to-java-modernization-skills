@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "source": {
+    "path": "tests/cobol-modernization/transpile-cobol-to-java21/fixtures/BILL010.cob",
+    "sha256": "REPLACE_WITH_SHA256_OF_BILL010_COB"
+  },
+  "programId": "BILL010",
+  "paragraphs": [
+    { "name": "0000-MAIN",              "section": true, "startLine": 14 },
+    { "name": "1000-VALIDATE-CUSTOMER", "section": true, "startLine": 20 },
+    { "name": "2000-CALC-CHARGES",      "section": true, "startLine": 29 }
+  ],
+  "controlFlow": {
+    "evaluates": [
+      {
+        "paragraph": "1000-VALIDATE-CUSTOMER",
+        "kind": "TRUE",
+        "arms": ["LK-CUST-ID = SPACES", "LK-BALANCE < 0", "OTHER"]
+      }
+    ],
+    "performs": [
+      { "from": "0000-MAIN", "to": "1000-VALIDATE-CUSTOMER", "kind": "SIMPLE", "thru": false },
+      { "from": "0000-MAIN", "to": "2000-CALC-CHARGES",      "kind": "SIMPLE", "thru": false }
+    ]
+  },
+  "db2Tables":    [ { "schema": "BILLDB", "table": "CUSTOMER", "ops": ["UPDATE"] } ],
+  "vsamDatasets": [],
+  "calls":        [],
+  "linkage":      [ { "name": "LK-BILL-INPUT", "copy": "BILLREC" } ],
+  "warnings":     []
+}
+

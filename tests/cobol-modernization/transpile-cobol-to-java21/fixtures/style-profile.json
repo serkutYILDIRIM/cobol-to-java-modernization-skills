@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "buildTool": "maven",
+  "javaVersion": "21",
+  "packageLayout": {
+    "rootPackage": "com.acme.billing",
+    "servicesPackage": "com.acme.billing.legacy.bill010",
+    "dtoPackage": "com.acme.billing.dto",
+    "persistencePackage": "com.acme.billing.persistence",
+    "exceptionPackage": "com.acme.billing.legacy.bill010.exception"
+  },
+  "namingConventions": {
+    "serviceSuffix": "Service",
+    "repositorySuffix": "Repository",
+    "exceptionSuffix": "Exception"
+  },
+  "architectureStyle": "hexagonal",
+  "dtoConvention": "java-record",
+  "exceptionHandling": "checked-domain-then-runtime-at-boundary",
+  "loggingStack": "slf4j",
+  "testStack": "junit5+assertj",
+  "apiStyle": "spring-mvc",
+  "persistenceStack": "spring-data-jpa",
+  "configStrategy": "application-yml",
+  "codeStyleConfig": ".editorconfig"
+}
+

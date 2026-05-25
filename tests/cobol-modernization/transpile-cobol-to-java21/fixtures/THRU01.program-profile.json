@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "source": {
+    "path": "tests/cobol-modernization/transpile-cobol-to-java21/fixtures/THRU01.cob",
+    "sha256": "REPLACE_WITH_SHA256_OF_THRU01_COB"
+  },
+  "programId": "THRU01",
+  "paragraphs": [
+    { "name": "0000-MAIN", "section": true, "startLine": 7  },
+    { "name": "1000-A",    "section": true, "startLine": 10 },
+    { "name": "1000-B",    "section": true, "startLine": 12 },
+    { "name": "1000-C",    "section": true, "startLine": 14 }
+  ],
+  "controlFlow": {
+    "evaluates": [],
+    "performs": [
+      { "from": "0000-MAIN", "to": "1000-A", "thruTo": "1000-C", "kind": "THRU", "thru": true }
+    ]
+  },
+  "db2Tables":    [],
+  "vsamDatasets": [],
+  "calls":        [],
+  "linkage":      [],
+  "warnings":     []
+}
+

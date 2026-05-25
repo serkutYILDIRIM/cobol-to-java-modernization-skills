@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "source": {
+    "path": "tests/cobol-modernization/transpile-cobol-to-java21/fixtures/THRU01.cob",
+    "sha256": "REPLACE_WITH_SHA256_OF_THRU01_COB"
+  },
+  "rules": [],
+  "warnings": ["W-NO-RULES-DETECTED"],
+  "chaining": { "styleProfileSeen": false, "profileSchemaVersion": "1.0" }
+}
+
