@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "source": { "programProfile": "BILL010.program-profile.json" },
+  "entities": [
+    {
+      "javaName": "Customer",
+      "javaFile": "com/acme/billing/persistence/Customer.java",
+      "table": "CUSTOMER",
+      "schema": "BILLDB",
+      "idFields": [
+        { "javaName": "custId", "javaType": "String", "column": "CUST_ID", "length": 10 }
+      ],
+      "fields": [
+        { "javaName": "lastCharge", "javaType": "BigDecimal", "column": "LAST_CHARGE", "precision": 9, "scale": 2, "nullable": true }
+      ],
+      "repository": {
+        "javaName": "CustomerRepository",
+        "javaFile": "com/acme/billing/persistence/CustomerRepository.java",
+        "extends": "JpaRepository<Customer, String>"
+      }
+    }
+  ],
+  "derivedQueries": [],
+  "warnings": [],
+  "chaining": { "styleProfileSeen": true, "profileSchemaVersion": "1.0", "copybookMappingSeen": true }
+}
+
