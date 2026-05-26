@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: billing-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/billing
+    username: billing
+    password: billing
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+server:
+  port: 8080
+
