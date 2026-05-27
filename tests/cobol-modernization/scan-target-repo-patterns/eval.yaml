@@ -1,0 +1,113 @@
+scenarios:
+  - name: "acme-billing-feature-sliced-happy-path"
+    prompt: |
+      Run scan-target-repo-patterns against the fixture repo at
+      tests/cobol-modernization/scan-target-repo-patterns/fixtures/acme-billing-service
+      and write outputs to ./out/.
+      Inputs:
+        target_repo_path: tests/cobol-modernization/scan-target-repo-patterns/fixtures/acme-billing-service
+        out_dir: ./out
+        git_sha: 4f2c1ab
+      Emit target-repo-style-profile.json (schemaVersion 1.0) and
+      style-profile-review.md per the SKILL.md contract.
+    assertions:
+      - type: file_exists
+        value: "./out/target-repo-style-profile.json"
+      - type: file_exists
+        value: "./out/style-profile-review.md"
+      - type: json_path
+        path: "$.schemaVersion"
+        equals: "1.0"
+      - type: json_path
+        path: "$.buildTool"
+        equals: "maven"
+      - type: json_path
+        path: "$.javaVersion"
+        equals: "21"
+      - type: json_path
+        path: "$.rootPackage"
+        equals: "com.acme.billing"
+      - type: json_path
+        path: "$.packageLayout"
+        equals: "feature-sliced"
+      - type: json_path
+        path: "$.architectureStyle"
+        equals: "feature-sliced-mvc"
+      - type: json_path
+        path: "$.dtoConvention.kind"
+        equals: "record"
+      - type: json_path
+        path: "$.persistenceStack.kind"
+        equals: "spring-data-jpa"
+      - type: json_path
+        path: "$.persistenceStack.entityAnnotation"
+        equals: "jakarta.persistence.Entity"
+      - type: json_path
+        path: "$.testStack.junit"
+        equals: "junit5"
+      - type: json_path
+        path: "$.testStack.integration"
+        contains: "testcontainers"
+      - type: json_path
+        path: "$.testStack.archUnit"
+        equals: true
+      - type: json_path
+        path: "$.exceptionHandling.style"
+        equals: "@RestControllerAdvice"
+      - type: json_path
+        path: "$.codeStyleConfig.spotless"
+        equals: true
+      - type: json_path
+        path: "$.codeStyleConfig.indentation"
+        equals: "4-space"
+      - type: output_not_contains
+        value: "Lombok"
+    rubric:
+      - "JSON validates against the locked schemaVersion 1.0 shape."
+      - "All values match what an expert engineer would infer from the fixture (record DTOs, no entity suffix, SLF4J static-final, jakarta.validation)."
+      - "style-profile-review.md is ≤ 60 lines and includes the five required sections."
+      - "warnings[] is an empty array (no inference ties in this fixture)."
+    timeout: 180
+
+  - name: "empty-repo-hard-fail"
+    prompt: |
+      Run scan-target-repo-patterns against the fixture repo at
+      tests/cobol-modernization/scan-target-repo-patterns/fixtures/empty-repo.
+      Do NOT pass force_defaults. The skill MUST hard-fail with
+      E-NO-JAVA-SOURCES and write no output files.
+      Inputs:
+        target_repo_path: tests/cobol-modernization/scan-target-repo-patterns/fixtures/empty-repo
+        out_dir: ./out
+    assertions:
+      - type: output_contains
+        value: "E-NO-JAVA-SOURCES"
+      - type: file_not_exists
+        value: "./out/target-repo-style-profile.json"
+      - type: file_not_exists
+        value: "./out/style-profile-review.md"
+    rubric:
+      - "Skill exits non-zero with the documented error code."
+      - "No partial sidecar is written on hard-fail."
+    timeout: 60
+
+  - name: "determinism-rerun-byte-identical"
+    prompt: |
+      Run scan-target-repo-patterns twice in succession against the
+      acme-billing-service fixture, writing to ./out-run1 and ./out-run2.
+      The two target-repo-style-profile.json files MUST be byte-identical.
+      Inputs (both runs):
+        target_repo_path: tests/cobol-modernization/scan-target-repo-patterns/fixtures/acme-billing-service
+        git_sha: 4f2c1ab
+    assertions:
+      - type: files_byte_identical_across_runs
+        files:
+          - "./out-run1/target-repo-style-profile.json"
+          - "./out-run2/target-repo-style-profile.json"
+      - type: files_byte_identical_across_runs
+        files:
+          - "./out-run1/style-profile-review.md"
+          - "./out-run2/style-profile-review.md"
+    rubric:
+      - "Output is fully deterministic: identical key order, identical array order, no embedded timestamps or absolute machine paths beyond source.repoPath."
+    timeout: 240
+
